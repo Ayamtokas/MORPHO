@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Morpho Concierge Dashboard</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0a2463; /* Deep Navy Blue */
+            --secondary-color: #3e92cc; /* Bright Blue */
+            --accent-color: #d8f3ff; /* Light Cyan/Silver */
+            --text-color: #333333;
+            --light-text-color: #ffffff;
+            --bg-color: #F8F8F8;
+            --glass-bg: rgba(10, 36, 99, 0.25); /* Navy-based glass */
+            --glass-border: rgba(216, 243, 255, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.15);
+            --text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
+            --card-bg-light: rgba(255, 255, 255, 0.9);
+        }
+
+        body.dark-mode {
+            --primary-color: #1a1a2e; /* Darker Navy */
+            --secondary-color: #0f4c75; /* Slightly muted blue */
+            --accent-color: #9ee4ff; /* Lighter cyan for contrast */
+            --text-color: #e0e0e0;
+            --light-text-color: #ffffff;
+            --bg-color: #0d0d1a; /* Very dark background */
+            --glass-bg: rgba(26, 26, 46, 0.4); /* Darker glass */
+            --glass-border: rgba(158, 228, 255, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.7);
+            --card-bg-light: rgba(40, 40, 60, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            filter: blur(4px) brightness(0.6);
+            transform: scale(1.1);
+            transition: filter 0.5s ease; /* For interactive background */
+        }
+        
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #loader .butterfly {
+            width: 80px;
+            height: 80px;
+            border: 4px solid var(--accent-color);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            height: 100vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .main-container::-webkit-scrollbar { display: none; }
+        
+        .dashboard { display: grid; gap: 1.5rem; }
+
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            opacity: 0;
+        }
+
+        .greeting h1 {
+            color: var(--light-text-color);
+            font-weight: 600;
+            font-size: 1.8rem;
+            text-shadow: var(--text-shadow);
+        }
+        
+        .greeting p {
+            color: var(--light-text-color);
+            opacity: 0.9;
+            text-shadow: var(--text-shadow);
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .language-select {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--light-text-color);
+            font-size: 0.9rem;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        .language-select option {
+            background: var(--primary-color);
+            color: var(--light-text-color);
+        }
+
+        .theme-toggle {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .theme-toggle i {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .clocks-container {
+            display: flex;
+            gap: 2rem;
+            color: var(--light-text-color);
+            text-shadow: var(--text-shadow);
+        }
+        .clock { text-align: right; }
+        .clock .time { font-size: 1.5rem; font-weight: 600; }
+        .clock .zone { font-size: 0.9rem; opacity: 0.8; }
+
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .service-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--light-text-color);
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            opacity: 0;
+            display: flex; /* Added for centering image/icon */
+            flex-direction: column; /* Added for centering image/icon */
+            justify-content: center; /* Added for centering image/icon */
+            align-items: center; /* Added for centering image/icon */
+        }
+        
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 40px 0 rgba(0,0,0,0.25);
+        }
+
+        .service-card i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+        }
+
+        /* Added for service card images */
+        .service-card img.service-logo {
+            width: 70px; /* Adjust size as needed */
+            height: 70px; /* Adjust size as needed */
+            object-fit: contain;
+            margin-bottom: 1rem;
+            border-radius: 10px; /* Optional: adds rounded corners to images */
+        }
+        
+        .service-card h3 {
+            font-weight: 500;
+            text-shadow: var(--text-shadow);
+        }
+
+        .knowledge-section { opacity: 0; }
+        .knowledge-section h2 {
+            color: var(--light-text-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-shadow: var(--text-shadow);
+        }
+        #knowledge-search {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            color: var(--light-text-color);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        #knowledge-search::placeholder { color: rgba(255, 255, 255, 0.7); }
+        
+        #knowledge-results {
+            max-height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .knowledge-item {
+            background: var(--card-bg-light); /* Changed to use variable */
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+            color: var(--text-color); /* Ensure text color adjusts */
+        }
+        .knowledge-item:hover { background: var(--accent-color); color: var(--primary-color); }
+        
+        .discover-section { opacity: 0; margin-top: 2rem; }
+        .discover-section h2 {
+            color: var(--light-text-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-shadow: var(--text-shadow);
+        }
+        
+        .discover-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .discover-card {
+            background-color: var(--card-bg-light); /* Changed to use variable */
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            color: var(--text-color); /* Ensure text color adjusts */
+        }
+        .discover-card:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+        
+        .discover-card img { width: 100%; height: 180px; object-fit: cover; }
+        .discover-card-content { padding: 1.5rem; }
+
+        #chat-toggle {
+            position: fixed; bottom: 2rem; right: 2rem;
+            width: 70px; height: 70px;
+            background: var(--primary-color); color: white;
+            border-radius: 50%; border: 3px solid var(--accent-color);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; cursor: pointer; z-index: 1001;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); transition: transform 0.3s ease;
+        }
+        #chat-toggle:hover { transform: scale(1.1); }
+
+        #chat-container {
+            position: fixed; bottom: -110%; right: 2rem; width: 400px;
+            height: 80vh; max-height: 600px; background: white; border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+            overflow: hidden; z-index: 1000; transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            background: var(--bg-color); /* Adjust chat background for dark mode */
+            color: var(--text-color);
+        }
+        #chat-container.open { bottom: 6rem; }
+        .chat-header { 
+            background: var(--primary-color); 
+            color: white; padding: 1rem; 
+            text-align: center; 
+            font-weight: 600; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+        .chat-messages { flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        .chat-message { padding: 0.75rem 1rem; border-radius: 15px; max-width: 80%; line-height: 1.4; }
+        .user-message { 
+            background: var(--secondary-color); 
+            color: white; align-self: flex-end; 
+            border-bottom-right-radius: 3px; 
+        }
+        .bot-message { 
+            background: var(--card-bg-light); /* Adjusted for dark mode */
+            color: var(--text-color); 
+            align-self: flex-start; 
+            border-bottom-left-radius: 3px; 
+        }
+        .bot-message.typing-indicator span { display: inline-block; width: 8px; height: 8px; background-color: #999; border-radius: 50%; margin: 0 2px; animation: bounce 1s infinite; }
+        .bot-message.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .bot-message.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+        .chat-input { display: flex; padding: 1rem; border-top: 1px solid #eee; }
+        .chat-input input { 
+            flex-grow: 1; 
+            border: 1px solid var(--glass-border); /* Adjusted for dark mode */
+            border-radius: 20px; padding: 0.75rem 1rem; 
+            font-size: 1rem; 
+            background: var(--bg-color); /* Adjusted for dark mode */
+            color: var(--text-color);
+        }
+        .chat-input input::placeholder { color: var(--text-color); opacity: 0.7; }
+        .chat-input button { 
+            background: var(--primary-color); 
+            color: white; border: none; 
+            border-radius: 50%; width: 45px; 
+            height: 45px; margin-left: 0.5rem; 
+            font-size: 1.5rem; cursor: pointer; 
+            display: flex; align-items: center; 
+            justify-content: center; 
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: var(--bg-color); /* Adjusted for dark mode */
+            color: var(--text-color);
+            padding: 2.5rem; border-radius: 20px; width: 90%; max-width: 500px; text-align: center; transform: scale(0.9); transition: transform 0.3s ease; 
+        }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+        .modal-content h2 { margin-bottom: 1rem; }
+        .modal-content p { margin-bottom: 2rem; color: var(--text-color); opacity: 0.8; }
+        .modal-buttons { display: flex; gap: 1rem; }
+        .modal-buttons button { width: 100%; padding: 1rem; border-radius: 12px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; }
+        .modal-buttons button:hover { transform: translateY(-2px); }
+        .modal-confirm { background: var(--primary-color); color: white; }
+        .modal-cancel { background: var(--card-bg-light); color: var(--text-color); border: 1px solid var(--glass-border); }
+        
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--secondary-color);
+            color: white; padding: 1rem 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 3000; font-weight: 600; transition: bottom 0.5s ease;
+            white-space: nowrap; /* Ensure toast content stays on one line */
+            text-align: center;
+            min-width: 250px;
+        }
+
+        #did-you-know-popup {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 2500;
+            opacity: 0;
+            transform: translateY(100px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            max-width: 300px;
+            font-size: 0.9rem;
+        }
+        #did-you-know-popup.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #did-you-know-popup .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container { padding: 1rem; padding-bottom: 6rem; }
+            .header { flex-direction: column; gap: 1rem; text-align: center; }
+            .clocks-container { justify-content: center; }
+            .clock { text-align: center; }
+            .service-grid { grid-template-columns: repeat(2, 1fr); }
+            #chat-container { width: calc(100% - 2rem); right: 1rem; max-height: 75vh; }
+            #chat-container.open { bottom: 6rem; }
+            #chat-toggle { right: 1rem; bottom: 1rem; width: 60px; height: 60px; font-size: 2rem; }
+            .header-controls { width: 100%; justify-content: center; }
+            .language-select { width: 120px; }
+        }
+    </style>
+</head>
+<body role="document">
+    
+    <div id="loader" role="progressbar" aria-label="Loading content">
+        <div class="butterfly"></div>
+    </div>
+
+    <video autoplay muted loop id="bg-video" aria-hidden="true">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-wavy-abstract-background-in-blue-tones-29140-large.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+    
+    <div class="main-container" role="main">
+        <div class="dashboard">
+            <header class="header" role="banner">
+                <div class="greeting">
+                    <h1 id="greeting-text">Good Afternoon, Guest!</h1>
+                    <p id="greeting-subtext">How can we assist you today?</p>
+                </div>
+                <div class="header-controls">
+                    <select id="language-switcher" class="language-select" aria-label="Select language">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="hi">हिन्दी</option>
+                    </select>
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark and light mode">
+                        <i class="ph-moon-fill"></i>
+                    </button>
+                </div>
+                <div class="clocks-container">
+                    <div class="clock" aria-live="polite">
+                        <div class="time" id="local-time">--:--:--</div>
+                        <div class="zone" data-lang-key="localTime">Local Time</div>
+                    </div>
+                    <div class="clock" aria-live="polite">
+                        <div class="time" id="ist-time">--:--:--</div>
+                        <div class="zone" data-lang-key="istTime">Indian Standard Time</div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="service-grid" aria-labelledby="services-heading">
+                <h2 id="services-heading" class="sr-only" data-lang-key="ourServices">Our Services</h2>
+                <div class="service-card" data-service="dining" role="button" tabindex="0">
+                    <i class="ph-fork-knife-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="dineWithUs">Dine With Us</h3>
+                </div>
+                <div class="service-card" data-service="spa" role="button" tabindex="0">
+                    <i class="ph-sparkle-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="spaWellness">Spa & Wellness</h3>
+                </div>
+                <div class="service-card" data-service="housekeeping" role="button" tabindex="0">
+                    <img src="https://placehold.co/70x70/3e92cc/d8f3ff?text=Clean" alt="Housekeeping Logo" class="service-logo" aria-hidden="true">
+                    <h3 data-lang-key="housekeeping">Housekeeping</h3>
+                </div>
+                <div class="service-card" data-service="transport" role="button" tabindex="0">
+                    <i class="ph-car-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="bookARide">Book a Ride</h3>
+                </div>
+                <div class="service-card" data-service="laundry" role="button" tabindex="0">
+                    <i class="ph-t-shirt-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="laundry">Laundry</h3>
+                </div>
+                <div class="service-card" data-service="wakeup" role="button" tabindex="0">
+                    <i class="ph-clock-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="wakeupCall">Wake-up Call</h3>
+                </div>
+                
+                <div class="service-card" data-service="mood-cleaning" role="button" tabindex="0">
+                    <i class="ph-smiley-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="moodClean">Mood Clean</h3>
+                </div>
+                <div class="service-card" data-service="eco-clean" role="button" tabindex="0">
+                    <i class="ph-leaf-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="ecoFriendlyClean">Eco-Friendly Clean</h3>
+                </div>
+                <div class="service-card" data-service="minibar-twist" role="button" tabindex="0">
+                    <i class="ph-gift-fill" aria-hidden="true"></i>
+                    <h3 data-lang-key="snackSipBundles">Snack & Sip Bundles</h3>
+                </div>
+            </section>
+
+            <section class="knowledge-section" aria-labelledby="faq-heading">
+                <h2 id="faq-heading" data-lang-key="faqTitle">Frequently Asked Questions</h2>
+                <input type="text" id="knowledge-search" placeholder="Search for answers..." aria-label="Search frequently asked questions">
+                <div id="knowledge-results" role="region" aria-live="polite" aria-atomic="true"></div>
+            </section>
+
+            <section class="discover-section" aria-labelledby="discover-heading">
+                <h2 id="discover-heading" data-lang-key="discoverTitle">Discover Your Surroundings</h2>
+                <div class="discover-grid">
+                    <div class="discover-card" role="article" aria-labelledby="attractions-card-title">
+                        <img src="https://placehold.co/600x400/0a2463/d8f3ff?text=Local+Attractions" alt="Attractions" aria-hidden="true">
+                        <div class="discover-card-content">
+                            <h3 id="attractions-card-title" data-lang-key="exploreAttractionsTitle">Explore Top Attractions</h3>
+                            <p data-lang-key="exploreAttractionsText">Our curated guide to the must-see landmarks, museums, and cultural hotspots near the hotel.</p>
+                        </div>
+                    </div>
+                    <div class="discover-card" role="article" aria-labelledby="cuisine-card-title">
+                        <img src="https://placehold.co/600x400/3e92cc/FFFFFF?text=Local+Cuisine" alt="Cuisine" aria-hidden="true">
+                        <div class="discover-card-content">
+                            <h3 id="cuisine-card-title" data-lang-key="localCuisineTitle">The Best Local Cuisine</h3>
+                            <p data-lang-key="localCuisineText">Embark on a culinary journey to find the most authentic and delicious food the city has to offer.</p>
+                        </div>
+                    </div>
+                    <div class="discover-card" role="article" aria-labelledby="gems-card-title">
+                        <img src="https://placehold.co/600x400/1e428a/FFFFFF?text=Hidden+Gems" alt="Gems" aria-hidden="true">
+                        <div class="discover-card-content">
+                            <h3 id="gems-card-title" data-lang-key="hiddenGemsTitle">Find the Hidden Gems</h3>
+                            <p data-lang-key="hiddenGemsText">Step off the beaten path and discover the local secrets and unique experiences recommended by our staff.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <button id="chat-toggle" aria-label="Open chat with Morpho Assistant">
+        <i class="ph-chats-fill" aria-hidden="true"></i>
+    </button>
+    <div id="chat-container" role="dialog" aria-modal="true" aria-labelledby="chat-header-title">
+        <div class="chat-header">
+            <span id="chat-header-title" data-lang-key="morphoAssistant">Morpho Assistant</span>
+            <button class="close-chat" aria-label="Close chat"><i class="ph-x-fill"></i></button>
+        </div>
+        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-atomic="false">
+             <div class="chat-message bot-message" data-lang-key="chatWelcome">Hello! Ask me anything or use the search bar above for instant answers.</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="user-query-input" placeholder="Type your question..." aria-label="Type your question">
+            <button id="send-query-btn" aria-label="Send message"><i class="ph-paper-plane-tilt-fill" aria-hidden="true"></i></button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-text">
+        <div class="modal-content" id="modal-content">
+            <h2 id="modal-title" data-lang-key="confirmRequestTitle">Confirm Request</h2>
+            <p id="modal-text" data-lang-key="confirmRequestText">Are you sure you want to request this service?</p>
+            <div class="modal-buttons">
+                <button class="modal-cancel" id="modal-cancel-btn" data-lang-key="cancelButton">Cancel</button>
+                <button class="modal-confirm" id="modal-confirm-btn" data-lang-key="confirmButton">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" role="status" aria-live="polite">Your request has been sent!</div>
+
+    <div id="did-you-know-popup" role="alert">
+        <button class="close-btn" aria-label="Close fact pop-up">&times;</button>
+        <span id="did-you-know-text"></span>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const translations = {
+            en: {
+                // General
+                goodMorning: "Good Morning, Guest!",
+                goodAfternoon: "Good Afternoon, Guest!",
+                goodEvening: "Good Evening, Guest!",
+                howCanWeAssist: "How can we assist you today?",
+                localTime: "Local Time",
+                istTime: "Indian Standard Time",
+                ourServices: "Our Services",
+                faqTitle: "Frequently Asked Questions",
+                searchAnswers: "Search for answers...",
+                discoverTitle: "Discover Your Surroundings",
+                morphoAssistant: "Morpho Assistant",
+                chatWelcome: "Hello! Ask me anything or use the search bar above for instant answers.",
+                notSureHelp: "I'm sorry, I'm not sure how to help with that. For complex requests, please contact the front desk directly.",
+                // Services
+                dineWithUs: "Dine With Us",
+                spaWellness: "Spa & Wellness",
+                housekeeping: "Housekeeping",
+                bookARide: "Book a Ride",
+                laundry: "Laundry",
+                wakeupCall: "Wake-up Call",
+                moodClean: "Mood Clean",
+                ecoFriendlyClean: "Eco-Friendly Clean",
+                snackSipBundles: "Snack & Sip Bundles",
+                // Discover
+                exploreAttractionsTitle: "Explore Top Attractions",
+                exploreAttractionsText: "Our curated guide to the must-see landmarks, museums, and cultural hotspots near the hotel.",
+                localCuisineTitle: "The Best Local Cuisine",
+                localCuisineText: "Embark on a culinary journey to find the most authentic and delicious food the city has to offer.",
+                hiddenGemsTitle: "Find the Hidden Gems",
+                hiddenGemsText: "Step off the beaten path and discover the local secrets and unique experiences recommended by our staff.",
+                // Modal
+                confirmRequestTitle: "Confirm Request",
+                confirmRequestText: "Are you sure you want to request this service?",
+                cancelButton: "Cancel",
+                confirmButton: "Confirm",
+                // Toast
+                requestSent: (service) => `Your request for "${service}" has been received!`,
+                // Service-specific confirmations
+                diningConfirm: 'Would you like us to reserve a table for two at The Azure Restaurant for 8:00 PM tonight?',
+                spaConfirm: 'Our spa concierge will contact you shortly to confirm your preferred treatment and time. Proceed?',
+                housekeepingConfirm: 'We will send a member of our housekeeping team to your room right away. Please confirm.',
+                transportConfirm: 'Do you need a taxi now, or would you like to schedule an airport transfer?',
+                laundryConfirm: 'Please confirm you have placed your items in the laundry bag. Our team will pick it up shortly.',
+                wakeupConfirm: 'Please confirm you would like a wake-up call for 7:00 AM tomorrow morning.',
+                moodCleaningConfirm: 'Select your room vibe! Our team will clean to match your chosen mood: "Relaxing Retreat" (calming scents, tidying) or "Energetic Refresh" (invigorating scents, deep clean). Please specify your mood to our concierge upon confirmation!',
+                ecoCleanConfirm: 'Opt for an environmentally conscious clean! Our team will use biodegradable products and minimize water usage. Thank you for helping us protect the planet. Confirm to proceed.',
+                minibarTwistConfirm: 'Craving something special? Choose from our themed mini-bar bundles like "Movie Night Munchies" or "Morning Buzz" for a delightful surprise. Our concierge will contact you to select your bundle upon confirmation!',
+                // Chat bot personality
+                chatHello: "Hello there! 👋 I am the Morpho Digital Concierge. How can I brighten your stay today?",
+                chatWelcomeBack: "You're very welcome! Is there anything else I can sprinkle some magic on for you?",
+                // Did you know facts
+                fact1: "Did you know: Morpho butterflies are known for their iridescent blue wings, which aren't pigment-based but created by microscopic structures reflecting light! Just like our service reflects excellence!",
+                fact2: "Did you know: Our hotel uses 100% renewable energy sources to power your comfortable stay! Green luxury at its best!",
+                fact3: "Did you know: The city you're in is famous for its hidden historical alleys. Ask our concierge for a guided tour!",
+                fact4: "Did you know: Our executive chef once cooked for a royal family! Experience their culinary artistry at The Azure Restaurant.",
+            },
+            es: {
+                goodMorning: "¡Buenos días, Huésped!",
+                goodAfternoon: "¡Buenas tardes, Huésped!",
+                goodEvening: "¡Buenas noches, Huésped!",
+                howCanWeAssist: "¿En qué podemos ayudarle hoy?",
+                localTime: "Hora Local",
+                istTime: "Hora Estándar de la India",
+                ourServices: "Nuestros Servicios",
+                faqTitle: "Preguntas Frecuentes",
+                searchAnswers: "Buscar respuestas...",
+                discoverTitle: "Descubra Su Entorno",
+                morphoAssistant: "Asistente Morpho",
+                chatWelcome: "¡Hola! Pregúntame cualquier cosa o usa la barra de búsqueda de arriba para respuestas instantáneas.",
+                notSureHelp: "Lo siento, no estoy seguro de cómo ayudar con eso. Para solicitudes complejas, por favor contacte directamente con la recepción.",
+                dineWithUs: "Cenar con Nosotros",
+                spaWellness: "Spa y Bienestar",
+                housekeeping: "Servicio de Limpieza",
+                bookARide: "Pedir un Taxi",
+                laundry: "Lavandería",
+                wakeupCall: "Llamada para Despertar",
+                moodClean: "Limpieza por Estado de Ánimo",
+                ecoFriendlyClean: "Limpieza Ecológica",
+                snackSipBundles: "Combos de Snacks y Bebidas",
+                exploreAttractionsTitle: "Explore las Principales Atracciones",
+                exploreAttractionsText: "Nuestra guía curada de los lugares de interés, museos y puntos culturales imperdibles cerca del hotel.",
+                localCuisineTitle: "La Mejor Cocina Local",
+                localCuisineText: "Embárquese en un viaje culinario para encontrar la comida más auténtica y deliciosa que la ciudad tiene para ofrecer.",
+                hiddenGemsTitle: "Encuentre las Joyas Ocultas",
+                hiddenGemsText: "Salga del camino trillado y descubra los secretos locales y experiencias únicas recomendadas por nuestro personal.",
+                confirmRequestTitle: "Confirmar Solicitud",
+                confirmRequestText: "¿Está seguro de que desea solicitar este servicio?",
+                cancelButton: "Cancelar",
+                confirmButton: "Confirmar",
+                requestSent: (service) => `¡Su solicitud de "${service}" ha sido recibida!`,
+                diningConfirm: '¿Le gustaría que le reservemos una mesa para dos en el restaurante The Azure para las 8:00 PM de esta noche?',
+                spaConfirm: 'Nuestro conserje del spa se pondrá en contacto con usted en breve para confirmar su tratamiento y hora preferidos. ¿Proceder?',
+                housekeepingConfirm: 'Enviaremos a un miembro de nuestro equipo de limpieza a su habitación de inmediato. Por favor, confirme.',
+                transportConfirm: '¿Necesita un taxi ahora o le gustaría programar un traslado al aeropuerto?',
+                laundryConfirm: 'Por favor, confirme que ha colocado sus artículos en la bolsa de lavandería. Nuestro equipo los recogerá en breve.',
+                wakeupConfirm: 'Por favor, confirme que desea una llamada para despertar a las 7:00 AM de mañana.',
+                moodCleaningConfirm: '¡Elija el ambiente de su habitación! Nuestro equipo limpiará para que coincida con su estado de ánimo elegido: "Retiro Relajante" (aromas calmantes, orden) o "Refresco Energético" (aromas vigorizantes, limpieza profunda). ¡Especifique su estado de ánimo a nuestro conserje al confirmar!',
+                ecoCleanConfirm: '¡Opte por una limpieza respetuosa con el medio ambiente! Nuestro equipo utilizará productos biodegradables y minimizará el uso de agua. Gracias por ayudarnos a proteger el planeta. Confirme para proceder.',
+                minibarTwistConfirm: '¿Se le antoja algo especial? Elija entre nuestros paquetes temáticos de minibar como "Noche de Película con Snacks" o "Bebidas Mañaneras" para una sorpresa deliciosa. ¡Nuestro conserje se pondrá en contacto con usted para seleccionar su paquete al confirmar!',
+                chatHello: "¡Hola! 👋 Soy el Conserje Digital Morpho. ¿Cómo puedo alegrar su estancia hoy?",
+                chatWelcomeBack: "¡De nada! ¿Hay algo más en lo que pueda ayudarle con un toque de magia?",
+                fact1: "Sabías que: Las mariposas Morpho son conocidas por sus alas azules iridiscentes, que no se basan en pigmentos, ¡sino que se crean por estructuras microscópicas que reflejan la luz! ¡Al igual que nuestro servicio refleja la excelencia!",
+                fact2: "Sabías que: ¡Nuestro hotel utiliza fuentes de energía 100% renovables para alimentar su cómoda estancia! ¡Lujo verde en su máxima expresión!",
+                fact3: "Sabías que: La ciudad en la que te encuentras es famosa por sus callejones históricos ocultos. ¡Pide a nuestro conserje un tour guiado!",
+                fact4: "Sabías que: ¡Nuestro chef ejecutivo una vez cocinó para una familia real! Experimente su arte culinario en el restaurante The Azure.",
+            },
+            fr: {
+                goodMorning: "Bonjour, Client !",
+                goodAfternoon: "Bon après-midi, Client !",
+                goodEvening: "Bonsoir, Client !",
+                howCanWeAssist: "Comment pouvons-nous vous aider aujourd'hui ?",
+                localTime: "Heure Locale",
+                istTime: "Heure Normale de l'Inde",
+                ourServices: "Nos Services",
+                faqTitle: "Foire Aux Questions",
+                searchAnswers: "Rechercher des réponses...",
+                discoverTitle: "Découvrez Votre Environnement",
+                morphoAssistant: "Assistant Morpho",
+                chatWelcome: "Bonjour ! Posez-moi n'importe quelle question ou utilisez la barre de recherche ci-dessus pour des réponses instantanées.",
+                notSureHelp: "Je suis désolé, je ne sais pas comment vous aider avec cela. Pour des demandes complexes, veuillez contacter directement la réception.",
+                dineWithUs: "Dînez avec Nous",
+                spaWellness: "Spa & Bien-être",
+                housekeeping: "Service de Nettoyage",
+                bookARide: "Réserver un Trajet",
+                laundry: "Blanchisserie",
+                wakeupCall: "Appel de Réveil",
+                moodClean: "Nettoyage d'Ambiance",
+                ecoFriendlyClean: "Nettoyage Écologique",
+                snackSipBundles: "Packs Collation & Boisson",
+                exploreAttractionsTitle: "Découvrez les Attractions Principales",
+                exploreAttractionsText: "Notre guide des incontournables, musées et lieux culturels près de l'hôtel.",
+                localCuisineTitle: "La Meilleure Cuisine Locale",
+                localCuisineText: "Embarquez pour un voyage culinaire et découvrez la cuisine la plus authentique et délicieuse de la ville.",
+                hiddenGemsTitle: "Trouvez les Trésors Cachés",
+                hiddenGemsText: "Sortez des sentiers battus et découvrez les secrets locaux et expériences uniques recommandés par notre personnel.",
+                confirmRequestTitle: "Confirmer la Demande",
+                confirmRequestText: "Êtes-vous sûr de vouloir demander ce service ?",
+                cancelButton: "Annuler",
+                confirmButton: "Confirmer",
+                requestSent: (service) => `Votre demande pour "${service}" a été reçue !`,
+                diningConfirm: 'Souhaitez-vous que nous réservions une table pour deux au restaurant The Azure pour 20h00 ce soir ?',
+                spaConfirm: 'Notre concierge du spa vous contactera sous peu pour confirmer votre traitement et l\'heure préférés. Procéder ?',
+                housekeepingConfirm: 'Nous enverrons un membre de notre équipe de nettoyage dans votre chambre immédiatement. Veuillez confirmer.',
+                transportConfirm: 'Avez-vous besoin d\'un taxi maintenant, ou souhaitez-vous planifier un transfert aéroport ?',
+                laundryConfirm: 'Veuillez confirmer que vous avez placé vos articles dans le sac de lessive. Notre équipe les récupérera sous peu.',
+                wakeupConfirm: 'Veuillez confirmer que vous souhaitez un appel de réveil pour 7h00 demain matin.',
+                moodCleaningConfirm: 'Choisissez l\'ambiance de votre chambre ! Notre équipe nettoiera pour correspondre à votre humeur choisie : "Retraite relaxante" (parfums apaisants, rangement) ou "Rafraîchissement énergique" (parfums vivifiants, nettoyage en profondeur). Veuillez spécifier votre humeur à notre concierge après confirmation !',
+                ecoCleanConfirm: 'Optez pour un nettoyage respectueux de l\'environnement ! Notre équipe utilisera des produits biodégradables et minimisera la consommation d\'eau. Merci de nous aider à protéger la planète. Confirmez pour continuer.',
+                minibarTwistConfirm: 'Envie de quelque chose de spécial ? Choisissez parmi nos packs mini-bar thématiques comme "Soirée Ciné Gourmande" ou "Matin Dynamique" pour une délicieuse surprise. Notre concierge vous contactera pour sélectionner votre pack après confirmation !',
+                chatHello: "Bonjour ! 👋 Je suis le Concierge Digital Morpho. Comment puis-je égayer votre séjour aujourd'hui ?",
+                chatWelcomeBack: "De rien ! Y a-t-il autre chose sur laquelle je peux saupoudrer un peu de magie pour vous ?",
+                fact1: "Saviez-vous que : Les papillons Morpho sont connus pour leurs ailes bleues iridescentes, qui ne sont pas basées sur des pigments mais créées par des structures microscopiques réfléchissant la lumière ! Tout comme notre service reflète l'excellence !",
+                fact2: "Saviez-vous que : Notre hôtel utilise des sources d'énergie 100% renouvelables pour alimenter votre séjour confortable ! Le luxe vert à son meilleur !",
+                fact3: "Saviez-vous que : La ville où vous vous trouvez est célèbre pour ses ruelles historiques cachées. Demandez à notre concierge une visite guidée !",
+                fact4: "Saviez-vous que : Notre chef exécutif a déjà cuisiné pour une famille royale ! Découvrez son art culinaire au restaurant The Azure.",
+            },
+            de: {
+                goodMorning: "Guten Morgen, Gast!",
+                goodAfternoon: "Guten Tag, Gast!",
+                goodEvening: "Guten Abend, Gast!",
+                howCanWeAssist: "Wie können wir Ihnen heute behilflich sein?",
+                localTime: "Ortszeit",
+                istTime: "Indische Standardzeit",
+                ourServices: "Unsere Dienste",
+                faqTitle: "Häufig gestellte Fragen",
+                searchAnswers: "Antworten suchen...",
+                discoverTitle: "Entdecken Sie Ihre Umgebung",
+                morphoAssistant: "Morpho Assistent",
+                chatWelcome: "Hallo! Fragen Sie mich alles oder nutzen Sie die Suchleiste oben für sofortige Antworten.",
+                notSureHelp: "Es tut mir leid, ich bin mir nicht sicher, wie ich Ihnen dabei helfen kann. Für komplexe Anfragen wenden Sie sich bitte direkt an die Rezeption.",
+                dineWithUs: "Bei uns speisen",
+                spaWellness: "Spa & Wellness",
+                housekeeping: "Housekeeping",
+                bookARide: "Fahrt buchen",
+                laundry: "Wäscheservice",
+                wakeupCall: "Weckruf",
+                moodClean: "Stimmungsreinigung",
+                ecoFriendlyClean: "Umweltfreundliche Reinigung",
+                snackSipBundles: "Snack & Schluck Pakete",
+                exploreAttractionsTitle: "Top-Attraktionen erkunden",
+                exploreAttractionsText: "Unser ausgewählter Führer zu den Sehenswürdigkeiten, Museen und kulturellen Hotspots in der Nähe des Hotels.",
+                localCuisineTitle: "Die beste lokale Küche",
+                localCuisineText: "Begeben Sie sich auf eine kulinarische Reise, um die authentischsten und köstlichsten Speisen zu finden, die die Stadt zu bieten hat.",
+                hiddenGemsTitle: "Versteckte Juwelen finden",
+                hiddenGemsText: "Verlassen Sie die ausgetretenen Pfade und entdecken Sie die lokalen Geheimnisse und einzigartigen Erlebnisse, die von unserem Personal empfohlen werden.",
+                confirmRequestTitle: "Anfrage bestätigen",
+                confirmRequestText: "Sind Sie sicher, dass Sie diesen Service anfordern möchten?",
+                cancelButton: "Abbrechen",
+                confirmButton: "Bestätigen",
+                requestSent: (service) => `Ihre Anfrage für "${service}" wurde empfangen!`,
+                diningConfirm: 'Möchten Sie, dass wir heute Abend um 20:00 Uhr einen Tisch für zwei im Restaurant The Azure reservieren?',
+                spaConfirm: 'Unser Spa-Concierge wird Sie in Kürze kontaktieren, um Ihre bevorzugte Behandlung und Uhrzeit zu bestätigen. Fortfahren?',
+                housekeepingConfirm: 'Wir werden sofort ein Mitglied unseres Housekeeping-Teams in Ihr Zimmer schicken. Bitte bestätigen Sie.',
+                transportConfirm: 'Benötigen Sie jetzt ein Taxi oder möchten Sie einen Flughafentransfer buchen?',
+                laundryConfirm: 'Bitte bestätigen Sie, dass Sie Ihre Artikel in den Wäschebeutel gelegt haben. Unser Team wird sie in Kürze abholen.',
+                wakeupConfirm: 'Bitte bestätigen Sie, dass Sie morgen früh um 7:00 Uhr einen Weckruf wünschen.',
+                moodCleaningConfirm: 'Wählen Sie Ihre Zimmeratmosphäre! Unser Team reinigt passend zu Ihrer gewählten Stimmung: „Entspannungs-Rückzug“ (beruhigende Düfte, Aufräumen) oder „Energetische Erfrischung“ (belebende Düfte, Tiefenreinigung). Bitte geben Sie unserem Concierge bei der Bestätigung Ihre Stimmung an!',
+                ecoCleanConfirm: 'Entscheiden Sie sich für eine umweltfreundliche Reinigung! Unser Team verwendet biologisch abbaubare Produkte und minimiert den Wasserverbrauch. Vielen Dank, dass Sie uns helfen, den Planeten zu schützen. Bestätigen Sie, um fortzufahren.',
+                minibarTwistConfirm: 'Lust auf etwas Besonderes? Wählen Sie aus unseren Themen-Minibar-Paketen wie „Filmabend-Snacks“ oder „Morgen-Kick“ für eine delightful Überraschung. Unser Concierge wird Sie kontaktieren, um Ihr Paket nach Bestätigung auszuwählen!',
+                chatHello: "Hallo! 👋 Ich bin der Morpho Digitale Concierge. Wie kann ich Ihren Aufenthalt heute verschönern?",
+                chatWelcomeBack: "Gern geschehen! Gibt es noch etwas, womit ich Ihnen eine Prise Magie einhauchen kann?",
+                fact1: "Wussten Sie schon: Morpho-Schmetterlinge sind bekannt für ihre irisierenden blauen Flügel, die nicht auf Pigmenten basieren, sondern durch mikroskopische Strukturen entstehen, die Licht reflektieren! Genau wie unser Service Exzellenz widerspiegelt!",
+                fact2: "Wussten Sie schon: Unser Hotel nutzt zu 100% erneuerbare Energiequellen, um Ihren komfortablen Aufenthalt zu gewährleisten! Grüner Luxus vom Feinsten!",
+                fact3: "Wussten Sie schon: Die Stadt, in der Sie sich befinden, ist berühmt für ihre versteckten historischen Gassen. Fragen Sie unseren Concierge nach einer Führung!",
+                fact4: "Wussten Sie schon: Unser Küchenchef hat einmal für eine königliche Familie gekocht! Erleben Sie seine Kochkunst im The Azure Restaurant.",
+            },
+            hi: {
+                goodMorning: "शुभ प्रभात, अतिथि!",
+                goodAfternoon: "शुभ दोपहर, अतिथि!",
+                goodEvening: "शुभ संध्या, अतिथि!",
+                howCanWeAssist: "हम आज आपकी कैसे सहायता कर सकते हैं?",
+                localTime: "स्थानीय समय",
+                istTime: "भारतीय मानक समय",
+                ourServices: "हमारी सेवाएं",
+                faqTitle: "अक्सर पूछे जाने वाले प्रश्न",
+                searchAnswers: "उत्तर खोजें...",
+                discoverTitle: "अपने परिवेश की खोज करें",
+                morphoAssistant: "मॉर्फो सहायक",
+                chatWelcome: "नमस्ते! मुझसे कुछ भी पूछें या तत्काल उत्तर के लिए ऊपर खोज बार का उपयोग करें।",
+                notSureHelp: "मुझे खेद है, मुझे नहीं पता कि इसमें कैसे मदद करूं। जटिल अनुरोधों के लिए, कृपया सीधे फ्रंट डेस्क से संपर्क करें।",
+                dineWithUs: "हमारे साथ भोजन करें",
+                spaWellness: "स्पा और वेलनेस",
+                housekeeping: "हाउसकीपिंग",
+                bookARide: "सवारी बुक करें",
+                laundry: "लॉन्ड्री",
+                wakeupCall: "वेक-अप कॉल",
+                moodClean: "मूड क्लीनिंग",
+                ecoFriendlyClean: "पर्यावरण-अनुकूल क्लीनिंग",
+                snackSipBundles: "स्नैक और सिप बंडल",
+                exploreAttractionsTitle: "शीर्ष आकर्षणों का अन्वेषण करें",
+                exploreAttractionsText: "होटल के पास अवश्य देखने योग्य स्थलों, संग्रहालयों और सांस्कृतिक हॉटस्पॉट के लिए हमारी क्यूरेटेड गाइड।",
+                localCuisineTitle: "सर्वश्रेष्ठ स्थानीय व्यंजन",
+                localCuisineText: "शहर के सबसे प्रामाणिक और स्वादिष्ट भोजन को खोजने के लिए एक पाक यात्रा शुरू करें।",
+                hiddenGemsTitle: "छिपे हुए रत्नों का पता लगाएं",
+                hiddenGemsText: "अपरंपरागत मार्ग पर चलें और हमारे कर्मचारियों द्वारा अनुशंसित स्थानीय रहस्यों और अद्वितीय अनुभवों की खोज करें।",
+                confirmRequestTitle: "अनुरोध की पुष्टि करें",
+                confirmRequestText: "क्या आप इस सेवा का अनुरोध करना चाहते हैं?",
+                cancelButton: "रद्द करें",
+                confirmButton: "पुष्टि करें",
+                requestSent: (service) => `आपके "${service}" के अनुरोध को प्राप्त कर लिया गया है!`,
+                diningConfirm: 'क्या आप चाहते हैं कि हम आज रात 8:00 बजे द अज़ूर रेस्तरां में दो के लिए एक टेबल आरक्षित करें?',
+                spaConfirm: 'हमारे स्पा कंसीयज जल्द ही आपसे संपर्क करेंगे ताकि आपके पसंदीदा उपचार और समय की पुष्टि हो सके। आगे बढ़ें?',
+                housekeepingConfirm: 'हम तुरंत अपने हाउसकीपिंग टीम के सदस्य को आपके कमरे में भेज देंगे। कृपया पुष्टि करें।',
+                transportConfirm: 'क्या आपको अभी टैक्सी की आवश्यकता है, या क्या आप हवाई अड्डे के स्थानांतरण का समय निर्धारित करना चाहेंगे?',
+                laundryConfirm: 'कृपया पुष्टि करें कि आपने अपने आइटम लॉन्ड्री बैग में रख दिए हैं। हमारी टीम उन्हें जल्द ही उठा लेगी।',
+                wakeupConfirm: 'कृपया पुष्टि करें कि आप कल सुबह 7:00 बजे वेक-अप कॉल चाहते हैं।',
+                moodCleaningConfirm: 'अपनी कमरे की भावना चुनें! हमारी टीम आपके चुने हुए मूड से मेल खाने के लिए साफ करेगी: "आरामदायक रिट्रीट" (शांत करने वाली सुगंध, साफ-सफाई) या "ऊर्जावान ताज़गी" (स्फूर्तिदायक सुगंध, गहरी सफाई)। कृपया पुष्टि होने पर हमारे कंसीयज को अपना मूड बताएं!',
+                ecoCleanConfirm: 'पर्यावरण के प्रति जागरूक सफाई का विकल्प चुनें! हमारी टीम बायोडिग्रेडेबल उत्पादों का उपयोग करेगी और पानी के उपयोग को कम करेगी। ग्रह की रक्षा में हमारी मदद करने के लिए धन्यवाद। आगे बढ़ने के लिए पुष्टि करें।',
+                minibarTwistConfirm: 'कुछ खास चाहिए? एक स्वादिष्ट आश्चर्य के लिए "मूवी नाइट मंचिस" या "मॉर्निंग बज़" जैसे हमारे थीम वाले मिनी-बार बंडलों में से चुनें। पुष्टि होने पर आपका बंडल चुनने के लिए हमारा कंसीयज आपसे संपर्क करेगा!',
+                chatHello: "नमस्ते! 👋 मैं मॉर्फो डिजिटल कंसीयज हूं। मैं आज आपके प्रवास को कैसे सुखद बना सकता हूं?",
+                chatWelcomeBack: "आपका स्वागत है! क्या मैं आपकी किसी और चीज़ में मदद कर सकता हूं?",
+                fact1: "क्या आप जानते हैं: मॉर्फो तितलियां अपने इंद्रधनुषी नीले पंखों के लिए जानी जाती हैं, जो वर्णक-आधारित नहीं होते बल्कि प्रकाश को प्रतिबिंबित करने वाली सूक्ष्म संरचनाओं द्वारा बनाए जाते हैं! ठीक वैसे ही जैसे हमारी सेवा उत्कृष्टता को दर्शाती है!",
+                fact2: "क्या आप जानते हैं: हमारा होटल आपके आरामदायक प्रवास को शक्ति देने के लिए 100% नवीकरणीय ऊर्जा स्रोतों का उपयोग करता है! सबसे अच्छा हरित विलासिता!",
+                fact3: "क्या आप जानते हैं: जिस शहर में आप हैं वह अपनी छिपी हुई ऐतिहासिक गलियों के लिए प्रसिद्ध है। हमारे कंसीयज से एक निर्देशित दौरे के लिए पूछें!",
+                fact4: "क्या आप जानते हैं: हमारे कार्यकारी शेफ ने एक बार शाही परिवार के लिए खाना बनाया था! द अज़ूर रेस्तरां में उनकी पाक कला का अनुभव करें।",
+            }
+        };
+
+        let currentLanguage = localStorage.getItem('morphoLang') || 'en';
+        const languageSwitcher = document.getElementById('language-switcher');
+        const themeToggle = document.getElementById('theme-toggle');
+        const bgVideo = document.getElementById('bg-video');
+        const didYouKnowPopup = document.getElementById('did-you-know-popup');
+        const didYouKnowText = document.getElementById('did-you-know-text');
+        const didYouKnowCloseBtn = didYouKnowPopup.querySelector('.close-btn');
+        const chatCloseBtn = document.querySelector('.chat-header .close-chat');
+
+        const knowledgeBase = {
+            // Reservations & Bookings
+            'How can I book a room?': { en: 'You can book a room directly through our website, by calling our reservations line, or at the front desk.', es: 'Puede reservar una habitación directamente a través de nuestra página web, llamando a nuestra línea de reservas o en la recepción.', fr: 'Vous pouvez réserver une chambre directement via notre site web, en appelant notre ligne de réservation, ou à la réception.', de: 'Sie können ein Zimmer direkt über unsere Website, telefonisch über unsere Reservierungszentrale oder an der Rezeption buchen.', hi: 'आप हमारी वेबसाइट के माध्यम से, हमारी आरक्षण लाइन पर कॉल करके, या फ्रंट डेस्क पर सीधे कमरा बुक कर सकते हैं।' },
+            'What is your cancellation policy?': { en: 'Our standard policy allows free cancellation up to 48 hours before check-in. Policies may vary for special offers.', es: 'Nuestra política estándar permite la cancelación gratuita hasta 48 horas antes del check-in. Las políticas pueden variar para ofertas especiales.', fr: 'Notre politique standard autorise l\'annulation gratuite jusqu\'à 48 heures avant l\'enregistrement. Les politiques peuvent varier pour les offres spéciales.', de: 'Unsere Standardrichtlinie erlaubt eine kostenlose Stornierung bis zu 48 Stunden vor dem Check-in. Richtlinien können für Sonderangebote variieren.', hi: 'हमारी मानक नीति चेक-इन से 48 घंटे पहले तक मुफ्त रद्दीकरण की अनुमति देती है। विशेष प्रस्तावों के लिए नीतियां भिन्न हो सकती हैं।' },
+            'Do you offer group booking discounts?': { en: 'Yes, we offer special rates for group bookings. Please contact our sales department for a quote.', es: 'Sí, ofrecemos tarifas especiales para reservas de grupo. Póngase en contacto con nuestro departamento de ventas para obtener un presupuesto.', fr: 'Oui, nous offrons des tarifs spéciaux pour les réservations de groupe. Veuillez contacter notre service commercial pour un devis.', de: 'Ja, wir bieten Sondertarife für Gruppenbuchungen an. Bitte kontaktieren Sie unsere Verkaufsabteilung für ein Angebot.', hi: 'हाँ, हम समूह बुकिंग के लिए विशेष दरें प्रदान करते हैं। कृपया उद्धरण के लिए हमारे बिक्री विभाग से संपर्क करें।' },
+            // Check-in & Check-out
+            'what time is check-in': { en: 'Standard check-in time is at 3:00 PM.', es: 'La hora estándar de check-in es a las 3:00 PM.', fr: 'L\'heure d\'enregistrement standard est à 15h00.', de: 'Die Standard-Check-in-Zeit ist um 15:00 Uhr.', hi: 'मानक चेक-इन का समय दोपहर 3:00 बजे है।' },
+            'what time is check-out': { en: 'Standard check-out time is at 12:00 PM (noon).', es: 'La hora estándar de check-out es a las 12:00 PM (mediodía).', fr: 'L\'heure de départ standard est à 12h00 (midi).', de: 'Die Standard-Check-out-Zeit ist um 12:00 Uhr (mittags).', hi: 'मानक चेक-आउट का समय दोपहर 12:00 बजे (दोपहर) है।' },
+            'can i get an early check-in': { en: 'Early check-in is subject to availability. Please contact the front desk on your arrival day, and we will do our best to accommodate.', es: 'El check-in temprano está sujeto a disponibilidad. Póngase en contacto con la recepción el día de su llegada, y haremos todo lo posible para acomodarle.', fr: 'L\'enregistrement anticipé est sous réserve de disponibilité. Veuillez contacter la réception le jour de votre arrivée, et nous ferons de notre mieux pour vous accommoder.', de: 'Ein früher Check-in ist je nach Verfügbarkeit möglich. Bitte kontaktieren Sie die Rezeption am Tag Ihrer Ankunft, und wir werden unser Bestes tun, um Sie unterzubringen.', hi: 'जल्दी चेक-इन उपलब्धता के अधीन है। कृपया अपने आगमन के दिन फ्रंट डेस्क से संपर्क करें, और हम समायोजित करने के लिए अपनी पूरी कोशिश करेंगे।' },
+            'can i get a late check-out': { en: 'Late check-out is subject to availability and may incur a fee. Please inquire at the front desk.', es: 'El check-out tardío está sujeto a disponibilidad y puede incurrir en una tarifa. Por favor, pregunte en la recepción.', fr: 'Le départ tardif est sous réserve de disponibilité et peut entraîner des frais. Veuillez vous renseigner à la réception.', de: 'Ein später Check-out ist je nach Verfügbarkeit und kann mit einer Gebühr verbunden sein. Bitte erkundigen Sie sich an der Rezeption.', hi: 'देर से चेक-आउट उपलब्धता के अधीन है और इसके लिए शुल्क लग सकता है। कृपया फ्रंट डेस्क पर पूछताछ करें।' },
+            'can you store my luggage': { en: 'Yes, we can certainly store your luggage for you free of charge before check-in or after check-out.', es: 'Sí, podemos guardar su equipaje de forma gratuita antes del check-in o después del check-out.', fr: 'Oui, nous pouvons certainement stocker vos bagages gratuitement avant l\'enregistrement ou après le départ.', de: 'Ja, wir können Ihr Gepäck vor dem Check-in oder nach dem Check-out kostenlos für Sie aufbewahren.', hi: 'हाँ, हम निश्चित रूप से चेक-इन से पहले या चेक-आउट के बाद आपका सामान निःशुल्क रख सकते हैं।' },
+            // Rooms & Amenities
+            'what is the wifi password': { en: "The Wi-Fi network is 'MorphoGuest' and the password is 'Welcome2Morpho'.", es: "La red Wi-Fi es 'MorphoGuest' y la contraseña es 'Welcome2Morpho'.", fr: "Le réseau Wi-Fi est 'MorphoGuest' et le mot de passe est 'Welcome2Morpho'.", de: "Das WLAN-Netzwerk ist 'MorphoGuest' und das Passwort ist 'Welcome2Morpho'.", hi: "वाई-फाई नेटवर्क 'मॉर्फोगैस्ट' है और पासवर्ड 'वेलकम2मॉर्फो' है।" },
+            'how do i get room service': { en: 'You can access the full room service menu by scanning the QR code on your room\'s desk. Orders can be placed by calling the room service line.', es: 'Puede acceder al menú completo del servicio de habitaciones escaneando el código QR en el escritorio de su habitación. Los pedidos se pueden realizar llamando a la línea de servicio de habitaciones.', fr: 'Vous pouvez accéder au menu complet du service d\'étage en scannant le code QR sur le bureau de votre chambre. Les commandes peuvent être passées en appelant la ligne du service d\'étage.', de: 'Sie können auf das vollständige Zimmerservice-Menü zugreifen, indem Sie den QR-Code auf dem Schreibtisch Ihres Zimmers scannen. Bestellungen können durch Anruf der Zimmerservice-Leitung aufgegeben werden.', hi: 'आप अपने कमरे के डेस्क पर क्यूआर कोड को स्कैन करके पूर्ण रूम सर्विस मेनू तक पहुंच सकते हैं। ऑर्डर रूम सर्विस लाइन पर कॉल करके दिए जा सकते हैं।' },
+            'can i get extra towels or pillows': { en: 'Of course. You can request extra towels or pillows directly through our housekeeping service card or by calling the front desk.', es: 'Por supuesto. Puede solicitar toallas o almohadas adicionales directamente a través de nuestra tarjeta de servicio de limpieza o llamando a la recepción.', fr: 'Bien sûr. Vous pouvez demander des serviettes ou des oreillers supplémentaires directement via notre carte de service de ménage ou en appelant la réception.', de: 'Natürlich. Sie können zusätzliche Handtücher oder Kissen direkt über unsere Housekeeping-Servicekarte oder telefonisch an der Rezeption anfordern.', hi: 'निश्चित रूप से। आप हमारी हाउसकीपिंग सेवा कार्ड के माध्यम से या फ्रंट डेस्क पर कॉल करके सीधे अतिरिक्त तौलिए या तकिए का अनुरोध कर सकते हैं।' },
+            'do you have a laundry service': { en: 'Our laundry service is available daily. You can find the laundry bag and price list in your wardrobe. Please notify housekeeping for pickup.', es: 'Nuestro servicio de lavandería está disponible todos los días. Puede encontrar la bolsa de lavandería y la lista de precios en su armario. Por favor, notifique a limpieza para la recogida.', fr: 'Notre service de blanchisserie est disponible tous les jours. Vous trouverez le sac de blanchisserie et la liste des prix dans votre garde-robe. Veuillez informer le service de ménage pour le ramassage.', de: 'Unser Wäscheservice ist täglich verfügbar. Den Wäschebeutel und die Preisliste finden Sie in Ihrem Kleiderschrank. Bitte benachrichtigen Sie das Housekeeping zur Abholung.', hi: 'हमारी लॉन्ड्री सेवा रोजाना उपलब्ध है। आप अपने वार्डरोब में लॉन्ड्री बैग और मूल्य सूची पा सकते हैं। कृपया पिकअप के लिए हाउसकीपिंग को सूचित करें।' },
+            // Dining
+            'what are the restaurant hours': { en: 'Our main restaurant, \'The Azure\', is open from 7:00 AM to 10:00 PM. The \'Skyline Bar\' is open from 4:00 PM to 12:00 AM.', es: 'Nuestro restaurante principal, \'The Azure\', está abierto de 7:00 AM a 10:00 PM. El \'Skyline Bar\' está abierto de 4:00 PM a 12:00 AM.', fr: 'Notre restaurant principal, \'The Azure\', est ouvert de 7h00 à 22h00. Le \'Skyline Bar\' est ouvert de 16h00 à 00h00.', de: 'Unser Hauptrestaurant, \'The Azure\', ist von 7:00 bis 22:00 Uhr geöffnet. Die \'Skyline Bar\' ist von 16:00 bis 00:00 Uhr geöffnet.', hi: 'हमारा मुख्य रेस्तरां, \'द अज़ूर\', सुबह 7:00 बजे से रात 10:00 बजे तक खुला रहता है। \'स्काईलाइन बार\' शाम 4:00 बजे से रात 12:00 बजे तक खुला रहता है।' },
+            'what time is breakfast': { en: 'Our complimentary breakfast buffet is served from 7:00 AM to 10:30 AM in \'The Azure\' restaurant.', es: 'Nuestro desayuno buffet gratuito se sirve de 7:00 AM a 10:30 AM en el restaurante \'The Azure\'.', fr: 'Notre petit-déjeuner buffet gratuit est servi de 7h00 à 10h30 au restaurant \'The Azure\'.', de: 'Unser kostenloses Frühstücksbuffet wird von 7:00 bis 10:30 Uhr im Restaurant \'The Azure\' serviert.', hi: 'हमारा मानार्थ नाश्ता बुफे \'द अज़ूर\' रेस्तरां में सुबह 7:00 बजे से सुबह 10:30 बजे तक परोसा जाता है।' },
+            'do i need to make a restaurant reservation': { en: 'Reservations are highly recommended, especially for dinner. You can book a table using the \'Dine With Us\' service card or by speaking with the front desk.', es: 'Se recomienda encarecidamente hacer reservaciones, especialmente para la cena. Puede reservar una mesa usando la tarjeta de servicio \'Cenar con Nosotros\' o hablando con la recepción.', fr: 'Les réservations sont fortement recommandées, surtout pour le dîner. Vous pouvez réserver une table en utilisant la carte de service \'Dînez avec Nous\' ou en parlant à la réception.', de: 'Reservierungen sind dringend empfohlen, besonders zum Abendessen. Sie können einen Tisch über die Servicekarte \'Dine With Us\' oder durch Kontaktaufnahme mit der Rezeption buchen.', hi: 'आरक्षण की अत्यधिक अनुशंसा की जाती है, खासकर रात के खाने के लिए। आप \'हमारे साथ भोजन करें\' सेवा कार्ड का उपयोग करके या फ्रंट डेस्क से बात करके एक टेबल बुक कर सकते हैं।' },
+            // Hotel Facilities
+            'what are the spa hours': { en: 'The \'Serenity Spa\' is open from 9:00 AM to 8:00 PM. We recommend booking treatments in advance.', es: 'El \'Serenity Spa\' está abierto de 9:00 AM a 8:00 PM. Recomendamos reservar tratamientos con anticipación.', fr: 'Le \'Serenity Spa\' est ouvert de 9h00 à 20h00. Nous vous recommandons de réserver les traitements à l\'avance.', de: 'Das \'Serenity Spa\' ist von 9:00 bis 20:00 Uhr geöffnet. Wir empfehlen, Behandlungen im Voraus zu buchen.', hi: '\'सेरेनिटी स्पा\' सुबह 9:00 बजे से रात 8:00 बजे तक खुला रहता है। हम उपचारों को पहले से बुक करने की सलाह देते हैं।' },
+            'how can i book a spa treatment': { en: 'To book a spa treatment, please use the \'Spa & Wellness\' service card. You can view our full menu of services there.', es: 'Para reservar un tratamiento de spa, utilice la tarjeta de servicio \'Spa y Bienestar\'. Allí podrá ver nuestro menú completo de servicios.', fr: 'Pour réserver un traitement spa, veuillez utiliser la carte de service \'Spa & Bien-être\'. Vous pouvez y consulter notre menu complet de services.', de: 'Um eine Spa-Behandlung zu buchen, verwenden Sie bitte die Servicekarte \'Spa & Wellness\'. Dort können Sie unser vollständiges Serviceangebot einsehen.', hi: 'स्पा उपचार बुक करने के लिए, कृपया \'स्पा और वेलनेस\' सेवा कार्ड का उपयोग करें। आप वहां हमारी सेवाओं का पूरा मेनू देख सकते हैं।' },
+            'is there a gym or fitness center': { en: 'Yes, our fitness center is open 24/7 for all hotel guests. Your room key will grant you access.', es: 'Sí, nuestro gimnasio está abierto las 24 horas del día, los 7 días de la semana para todos los huéspedes del hotel. Su llave de la habitación le dará acceso.', fr: 'Oui, notre centre de remise en forme est ouvert 24h/24 et 7j/7 pour tous les clients de l\'hôtel. Votre clé de chambre vous donnera accès.', de: 'Ja, unser Fitnesscenter ist rund um die Uhr für alle Hotelgäste geöffnet. Ihr Zimmerschlüssel gewährt Ihnen Zugang.', hi: 'हाँ, हमारा फिटनेस सेंटर सभी होटल मेहमानों के लिए 24/7 खुला है। आपकी कमरे की चाबी आपको पहुंच प्रदान करेगी।' },
+            'what are the swimming pool hours': { en: 'The swimming pool is open from 6:00 AM to 9:00 PM daily.', es: 'La piscina está abierta de 6:00 AM a 9:00 PM todos los días.', fr: 'La piscine est ouverte de 6h00 à 21h00 tous les jours.', de: 'Der Swimmingpool ist täglich von 6:00 bis 21:00 Uhr geöffnet.', hi: 'स्विमिंग पूल रोजाना सुबह 6:00 बजे से रात 9:00 बजे तक खुला रहता है।' },
+            'is parking available': { en: 'We offer complimentary valet parking for all our guests. Simply pull up to the main entrance, and our team will assist you.', es: 'Ofrecemos servicio de aparcacoches gratuito para todos nuestros huéspedes. Simplemente acérquese a la entrada principal y nuestro equipo le ayudará.', fr: 'Nous offrons un service de voiturier gratuit à tous nos clients. Il vous suffit de vous rendre à l\'entrée principale, et notre équipe vous assistera.', de: 'Wir bieten allen unseren Gästen einen kostenlosen Valet-Parkservice an. Fahren Sie einfach bis zum Haupteingang vor, und unser Team wird Ihnen behilflich sein.', hi: 'हम अपने सभी मेहमानों के लिए मानार्थ वैले पार्किंग प्रदान करते हैं। बस मुख्य प्रवेश द्वार पर पहुंचें, और हमारी टीम आपकी सहायता करेगी।' },
+            // General
+            'hello': { en: 'Hello! I am the Morpho Digital Concierge. How can I assist you today?', es: '¡Hola! Soy el Conserje Digital Morpho. ¿Cómo puedo ayudarle hoy?', fr: 'Bonjour ! Je suis le Concierge Numérique Morpho. Comment puis-je vous aider aujourd\'hui ?', de: 'Hallo! Ich bin der Morpho Digital Concierge. Wie kann ich Ihnen heute behilflich sein?', hi: 'नमस्ते! मैं मॉर्फो डिजिटल कंसीयज हूं। मैं आज आपकी कैसे सहायता कर सकता हूं?' },
+            'thank you': { en: "You're very welcome! Is there anything else I can help you with?", es: "¡De nada! ¿Hay algo más en lo que pueda ayudarle?", fr: "De rien ! Y a-t-il autre chose que je puisse faire pour vous ?", de: "Gern geschehen! Kann ich Ihnen sonst noch behilflich sein?", hi: "आपका बहुत स्वागत है! क्या मैं आपकी किसी और चीज़ में मदद कर सकता हूं?" },
+            'what can you do': { en: 'You can ask me questions about hotel services, facilities, dining, and local attractions. You can also use the service cards to make requests.', es: 'Puede hacerme preguntas sobre los servicios del hotel, las instalaciones, la comida y las atracciones locales. También puede utilizar las tarjetas de servicio para hacer solicitudes.', fr: 'Vous pouvez me poser des questions sur les services de l\'hôtel, les installations, la restauration et les attractions locales. Vous pouvez également utiliser les cartes de service pour faire des demandes.', de: 'Sie können mir Fragen zu Hotelservices, Einrichtungen, Restaurants und lokalen Attraktionen stellen. Sie können auch die Servicekarten verwenden, um Anfragen zu stellen.', hi: 'आप मुझसे होटल सेवाओं, सुविधाओं, भोजन और स्थानीय आकर्षणों के बारे में प्रश्न पूछ सकते हैं। आप अनुरोध करने के लिए सेवा कार्ड का भी उपयोग कर सकते हैं।' },
+            // Add more questions here to reach 100+
+        };
+        
+        // --- INITIALIZATION ---
+        const loader = document.getElementById('loader');
+        
+        window.addEventListener('load', () => {
+            gsap.to(loader, { opacity: 0, duration: 0.5, onComplete: () => {
+                loader.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                gsap.fromTo(".header", {y: -50, opacity: 0}, {y: 0, opacity: 1, duration: 0.8, ease: "power2.out", delay: 0.2});
+                gsap.fromTo(".service-card", {y: 50, opacity: 0}, {y: 0, opacity: 1, duration: 0.6, ease: "power2.out", stagger: 0.1, delay: 0.5});
+                gsap.fromTo(".knowledge-section", {y: 50, opacity: 0}, {y: 0, opacity: 1, duration: 0.8, ease: "power2.out", delay: 0.8});
+                gsap.fromTo(".discover-section", {y: 50, opacity: 0}, {y: 0, opacity: 1, duration: 0.8, ease: "power2.out", delay: 1.1});
+            }});
+            
+            setGreeting();
+            updateClocks();
+            setInterval(updateClocks, 1000);
+            renderKnowledgeBase(Object.keys(knowledgeBase)); // Initial render
+            loadThemePreference();
+            languageSwitcher.value = currentLanguage; // Set initial language
+            applyTranslations(currentLanguage); // Apply initial translations
+            startDidYouKnowCarousel();
+        });
+
+        // --- MULTILINGUAL SUPPORT ---
+        languageSwitcher.addEventListener('change', (e) => {
+            currentLanguage = e.target.value;
+            localStorage.setItem('morphoLang', currentLanguage);
+            applyTranslations(currentLanguage);
+            setGreeting(); // Update greeting based on new language
+            // Re-render knowledge base to show translated titles if applicable
+            renderKnowledgeBase(Object.keys(knowledgeBase));
+            // Update service card titles if they were not already done by data-lang-key
+            serviceCards.forEach(card => {
+                const serviceKey = card.dataset.service;
+                const info = serviceInfo[serviceKey];
+                if (info && info.titleKey) {
+                    card.querySelector('h3').textContent = translations[currentLanguage][info.titleKey];
+                }
+            });
+            // Re-initialize service card click handlers to update modal text with new language
+            setupServiceCardHandlers();
+        });
+
+        function applyTranslations(lang) {
+            document.querySelectorAll('[data-lang-key]').forEach(element => {
+                const key = element.dataset.langKey;
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+
+            // Update placeholder for search input
+            document.getElementById('knowledge-search').placeholder = translations[lang].searchAnswers;
+            document.getElementById('user-query-input').placeholder = translations[lang].searchAnswers;
+
+            // Update service card titles that are not handled by modal
+            document.querySelector('[data-service="dining"] h3').textContent = translations[lang].dineWithUs;
+            document.querySelector('[data-service="spa"] h3').textContent = translations[lang].spaWellness;
+            document.querySelector('[data-service="housekeeping"] h3').textContent = translations[lang].housekeeping;
+            document.querySelector('[data-service="transport"] h3').textContent = translations[lang].bookARide;
+            document.querySelector('[data-service="laundry"] h3').textContent = translations[lang].laundry;
+            document.querySelector('[data-service="wakeup"] h3').textContent = translations[lang].wakeupCall;
+            document.querySelector('[data-service="mood-cleaning"] h3').textContent = translations[lang].moodClean;
+            document.querySelector('[data-service="eco-clean"] h3').textContent = translations[lang].ecoFriendlyClean;
+            document.querySelector('[data-service="minibar-twist"] h3').textContent = translations[lang].snackSipBundles;
+            
+            // Update discover card content
+            document.getElementById('attractions-card-title').textContent = translations[lang].exploreAttractionsTitle;
+            document.querySelector('#attractions-card-title + p').textContent = translations[lang].exploreAttractionsText;
+            document.getElementById('cuisine-card-title').textContent = translations[lang].localCuisineTitle;
+            document.querySelector('#cuisine-card-title + p').textContent = translations[lang].localCuisineText;
+            document.getElementById('gems-card-title').textContent = translations[lang].hiddenGemsTitle;
+            document.querySelector('#gems-card-title + p').textContent = translations[lang].hiddenGemsText;
+        }
+
+        function setGreeting() {
+            const hour = new Date().getHours();
+            const greetingText = document.getElementById('greeting-text');
+            if (hour < 12) { greetingText.textContent = translations[currentLanguage].goodMorning; } 
+            else if (hour < 18) { greetingText.textContent = translations[currentLanguage].goodAfternoon; } 
+            else { greetingText.textContent = translations[currentLanguage].goodEvening; }
+            document.getElementById('greeting-subtext').textContent = translations[currentLanguage].howCanWeAssist;
+        }
+
+        function updateClocks() {
+            const now = new Date();
+            // Local Time
+            document.getElementById('local-time').textContent = now.toLocaleTimeString();
+            // IST Time (UTC + 5:30)
+            const istOffset = 5.5 * 60; // 5.5 hours in minutes
+            const localOffset = now.getTimezoneOffset(); // in minutes
+            const istTimeMs = now.getTime() + (istOffset + localOffset) * 60 * 1000;
+            const istTime = new Date(istTimeMs);
+            const istHours = istTime.getHours().toString().padStart(2, '0');
+            const istMinutes = istTime.getMinutes().toString().padStart(2, '0');
+            const istSeconds = istTime.getSeconds().toString().padStart(2, '0');
+            document.getElementById('ist-time').textContent = `${istHours}:${istMinutes}:${istSeconds}`;
+        }
+        
+        // --- KNOWLEDGE BASE SEARCH ---
+        const knowledgeSearch = document.getElementById('knowledge-search');
+        const knowledgeResults = document.getElementById('knowledge-results');
+
+        knowledgeSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredKeys = Object.keys(knowledgeBase).filter(key => key.toLowerCase().includes(searchTerm));
+            renderKnowledgeBase(filteredKeys);
+        });
+
+        function renderKnowledgeBase(keys) {
+            knowledgeResults.innerHTML = '';
+            if (keys.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'knowledge-item';
+                noResults.textContent = translations[currentLanguage].notSureHelp;
+                knowledgeResults.appendChild(noResults);
+                return;
+            }
+            keys.forEach(key => {
+                const item = document.createElement('div');
+                item.className = 'knowledge-item';
+                item.textContent = key.charAt(0).toUpperCase() + key.slice(1); // Keep original key for display
+                item.setAttribute('role', 'button');
+                item.setAttribute('tabindex', '0');
+                item.addEventListener('click', () => {
+                    handleUserQuery(key);
+                    if (!chatContainer.classList.contains('open')) {
+                        chatContainer.classList.add('open');
+                        chatToggle.innerHTML = '<i class="ph-x-fill"></i>';
+                        chatToggle.setAttribute('aria-label', translations[currentLanguage]['closeChat']);
+                    }
+                });
+                item.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleUserQuery(key);
+                        if (!chatContainer.classList.contains('open')) {
+                            chatContainer.classList.add('open');
+                            chatToggle.innerHTML = '<i class="ph-x-fill"></i>';
+                            chatToggle.setAttribute('aria-label', translations[currentLanguage]['closeChat']);
+                        }
+                    }
+                });
+                knowledgeResults.appendChild(item);
+            });
+        }
+        
+        // --- CHAT FUNCTIONALITY ---
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatContainer = document.getElementById('chat-container');
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-query-input');
+        const sendBtn = document.getElementById('send-query-btn');
+
+        chatToggle.addEventListener('click', () => {
+            chatContainer.classList.toggle('open');
+            if (chatContainer.classList.contains('open')) {
+                chatToggle.innerHTML = '<i class="ph-x-fill"></i>';
+                chatToggle.setAttribute('aria-label', translations[currentLanguage]['closeChat']);
+            } else {
+                chatToggle.innerHTML = '<i class="ph-chats-fill"></i>';
+                chatToggle.setAttribute('aria-label', translations[currentLanguage]['openChat']);
+            }
+        });
+
+        chatCloseBtn.addEventListener('click', () => {
+            chatContainer.classList.remove('open');
+            chatToggle.innerHTML = '<i class="ph-chats-fill"></i>';
+            chatToggle.setAttribute('aria-label', translations[currentLanguage]['openChat']);
+        });
+
+
+        const handleQuerySubmit = () => {
+             const query = userInput.value.trim();
+             if(query) handleUserQuery(query);
+             userInput.value = '';
+        }
+        sendBtn.addEventListener('click', handleQuerySubmit);
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleQuerySubmit(); });
+        
+        function handleUserQuery(query) {
+            if (!query) return;
+            addMessage(query, 'user');
+            showTypingIndicator();
+            setTimeout(() => {
+                const response = findBestResponse(query);
+                removeTypingIndicator();
+                addMessage(response, 'bot');
+            }, 1200);
+        }
+
+        function addMessage(text, sender) {
+            const messageEl = document.createElement('div');
+            messageEl.className = `chat-message ${sender}-message`;
+            messageEl.textContent = text.charAt(0).toUpperCase() + text.slice(1);
+            messageEl.setAttribute('role', 'status'); // For screen readers
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            const typingEl = document.createElement('div');
+            typingEl.className = 'chat-message bot-message typing-indicator';
+            typingEl.innerHTML = '<span></span><span></span><span></span>';
+            typingEl.setAttribute('aria-label', 'Bot is typing');
+            chatMessages.appendChild(typingEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function removeTypingIndicator() {
+            const indicator = document.querySelector('.typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function findBestResponse(query) {
+            query = query.toLowerCase();
+            // Direct match first
+            if (knowledgeBase[query] && knowledgeBase[query][currentLanguage]) {
+                return knowledgeBase[query][currentLanguage];
+            }
+            // Then keyword match
+            let bestMatch = { key: null, score: 0 };
+            for (const key in knowledgeBase) {
+                const keywords = key.split(' ');
+                let score = 0;
+                keywords.forEach(keyword => { 
+                    if (query.includes(keyword.toLowerCase())) score++; 
+                });
+                if (score > bestMatch.score) { bestMatch = { key, score }; }
+            }
+            if (bestMatch.score > 0 && knowledgeBase[bestMatch.key] && knowledgeBase[bestMatch.key][currentLanguage]) {
+                // Add some personality to common greetings
+                if (bestMatch.key === 'hello') return translations[currentLanguage].chatHello;
+                if (bestMatch.key === 'thank you') return translations[currentLanguage].chatWelcomeBack;
+                return knowledgeBase[bestMatch.key][currentLanguage];
+            }
+            return translations[currentLanguage].notSureHelp;
+        }
+        
+        // --- MODAL & SERVICE REQUESTS ---
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const serviceCards = document.querySelectorAll('.service-card');
+        let currentService = null;
+        const serviceInfo = {
+            dining: { titleKey: 'bookTableTitle', textKey: 'diningConfirm' },
+            spa: { titleKey: 'bookSpaTitle', textKey: 'spaConfirm' },
+            housekeeping: { titleKey: 'requestHousekeepingTitle', textKey: 'housekeepingConfirm' },
+            transport: { titleKey: 'bookRideTitle', textKey: 'transportConfirm' },
+            laundry: { titleKey: 'laundryPickupTitle', textKey: 'laundryConfirm' },
+            wakeup: { titleKey: 'setWakeupCallTitle', textKey: 'wakeupConfirm' },
+            'mood-cleaning': { titleKey: 'moodCleaningTitle', textKey: 'moodCleaningConfirm' },
+            'eco-clean': { titleKey: 'ecoCleanTitle', textKey: 'ecoCleanConfirm' },
+            'minibar-twist': { titleKey: 'snackSipBundlesTitle', textKey: 'minibarTwistConfirm' }
+        };
+
+        // Add dummy titles to translations for services
+        translations.en.bookTableTitle = "Book a Table";
+        translations.en.bookSpaTitle = "Book Spa Treatment";
+        translations.en.requestHousekeepingTitle = "Request Housekeeping";
+        translations.en.bookRideTitle = "Book a Ride";
+        translations.en.laundryPickupTitle = "Laundry Pickup";
+        translations.en.setWakeupCallTitle = "Set Wake-up Call";
+        translations.en.moodCleaningTitle = "Mood-Based Cleaning";
+        translations.en.ecoCleanTitle = "Eco-Friendly Clean";
+        translations.en.snackSipBundlesTitle = "Snack & Sip Bundles";
+        translations.en.openChat = "Open chat with Morpho Assistant";
+        translations.en.closeChat = "Close chat";
+
+        translations.es.bookTableTitle = "Reservar una Mesa";
+        translations.es.bookSpaTitle = "Reservar Tratamiento de Spa";
+        translations.es.requestHousekeepingTitle = "Solicitar Servicio de Limpieza";
+        translations.es.bookRideTitle = "Pedir un Taxi";
+        translations.es.laundryPickupTitle = "Recogida de Lavandería";
+        translations.es.setWakeupCallTitle = "Establecer Llamada para Despertar";
+        translations.es.moodCleaningTitle = "Limpieza por Estado de Ánimo";
+        translations.es.ecoCleanTitle = "Limpieza Ecológica";
+        translations.es.snackSipBundlesTitle = "Combos de Snacks y Bebidas";
+        translations.es.openChat = "Abrir chat con Asistente Morpho";
+        translations.es.closeChat = "Cerrar chat";
+
+        translations.fr.bookTableTitle = "Réserver une Table";
+        translations.fr.bookSpaTitle = "Réserver un Traitement Spa";
+        translations.fr.requestHousekeepingTitle = "Demander Service de Nettoyage";
+        translations.fr.bookRideTitle = "Réserver un Trajet";
+        translations.fr.laundryPickupTitle = "Ramassage Blanchisserie";
+        translations.fr.setWakeupCallTitle = "Définir Appel de Réveil";
+        translations.fr.moodCleaningTitle = "Nettoyage d'Ambiance";
+        translations.fr.ecoCleanTitle = "Nettoyage Écologique";
+        translations.fr.snackSipBundlesTitle = "Packs Collation & Boisson";
+        translations.fr.openChat = "Ouvrir le chat avec l'Assistant Morpho";
+        translations.fr.closeChat = "Fermer le chat";
+
+        translations.de.bookTableTitle = "Tisch buchen";
+        translations.de.bookSpaTitle = "Spa-Behandlung buchen";
+        translations.de.requestHousekeepingTitle = "Housekeeping anfordern";
+        translations.de.bookRideTitle = "Fahrt buchen";
+        translations.de.laundryPickupTitle = "Wäscheabholung";
+        translations.de.setWakeupCallTitle = "Weckruf einstellen";
+        translations.de.moodCleaningTitle = "Stimmungsbasierte Reinigung";
+        translations.de.ecoCleanTitle = "Umweltfreundliche Reinigung";
+        translations.de.snackSipBundlesTitle = "Snack & Schluck Pakete";
+        translations.de.openChat = "Chat mit Morpho Assistent öffnen";
+        translations.de.closeChat = "Chat schließen";
+
+        translations.hi.bookTableTitle = "टेबल बुक करें";
+        translations.hi.bookSpaTitle = "स्पा उपचार बुक करें";
+        translations.hi.requestHousekeepingTitle = "हाउसकीपिंग का अनुरोध करें";
+        translations.hi.bookRideTitle = "सवारी बुक करें";
+        translations.hi.laundryPickupTitle = "लॉन्ड्री पिकअप";
+        translations.hi.setWakeupCallTitle = "वेक-अप कॉल सेट करें";
+        translations.hi.moodCleaningTitle = "मूड-आधारित सफाई";
+        translations.hi.ecoCleanTitle = "पर्यावरण-अनुकूल सफाई";
+        translations.hi.snackSipBundlesTitle = "स्नैक और सिप बंडल";
+        translations.hi.openChat = "मॉर्फो सहायक के साथ चैट खोलें";
+        translations.hi.closeChat = "चैट बंद करें";
+
+
+        function setupServiceCardHandlers() {
+            serviceCards.forEach(card => {
+                // Remove existing listeners to prevent duplicates
+                card.removeEventListener('click', handleServiceCardClick);
+                card.removeEventListener('keypress', handleServiceCardKeypress);
+
+                card.addEventListener('click', handleServiceCardClick);
+                card.addEventListener('keypress', handleServiceCardKeypress);
+            });
+        }
+
+        function handleServiceCardClick(e) {
+            currentService = this.dataset.service;
+            const info = serviceInfo[currentService];
+            if (info) {
+                modalTitle.textContent = translations[currentLanguage][info.titleKey] || info.title;
+                modalText.textContent = translations[currentLanguage][info.textKey] || info.text;
+                openModal();
+            }
+        }
+
+        function handleServiceCardKeypress(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleServiceCardClick.call(this, e);
+            }
+        }
+
+        setupServiceCardHandlers(); // Initial setup
+
+        function openModal() { 
+            modalOverlay.classList.add('open'); 
+            modalOverlay.setAttribute('aria-hidden', 'false');
+            document.getElementById('modal-content').focus(); // Focus the modal for accessibility
+        }
+        function closeModal() { 
+            modalOverlay.classList.remove('open'); 
+            modalOverlay.setAttribute('aria-hidden', 'true');
+            // Return focus to the element that triggered the modal
+            if (currentService) {
+                document.querySelector(`.service-card[data-service="${currentService}"]`).focus();
+            }
+        }
+
+        modalCancelBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => { 
+            if (e.target === modalOverlay) closeModal(); 
+        });
+        modalConfirmBtn.addEventListener('click', () => {
+            closeModal();
+            const serviceTitle = translations[currentLanguage][serviceInfo[currentService].titleKey] || serviceInfo[currentService].title;
+            showToast(translations[currentLanguage].requestSent(serviceTitle));
+            triggerConfetti(); // Surprise element: confetti!
+        });
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.bottom = '20px';
+            setTimeout(() => { toast.style.bottom = '-100px'; }, 4000);
+        }
+
+        // --- DARK/LIGHT MODE TOGGLE ---
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('morphoTheme', isDarkMode ? 'dark' : 'light');
+            updateThemeToggleIcon(isDarkMode);
+        });
+
+        function loadThemePreference() {
+            const savedTheme = localStorage.getItem('morphoTheme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                updateThemeToggleIcon(true);
+            } else {
+                document.body.classList.remove('dark-mode');
+                updateThemeToggleIcon(false);
+            }
+        }
+
+        function updateThemeToggleIcon(isDarkMode) {
+            const icon = themeToggle.querySelector('i');
+            if (isDarkMode) {
+                icon.classList.remove('ph-moon-fill');
+                icon.classList.add('ph-sun-fill');
+                themeToggle.setAttribute('aria-label', 'Switch to light mode');
+            } else {
+                icon.classList.remove('ph-sun-fill');
+                icon.classList.add('ph-moon-fill');
+                themeToggle.setAttribute('aria-label', 'Switch to dark mode');
+            }
+        }
+
+        // --- SURPRISE ELEMENTS ---
+        // 1. Interactive Background
+        bgVideo.addEventListener('click', () => {
+            gsap.to(bgVideo, { 
+                filter: 'blur(0px) brightness(1.2)', 
+                duration: 0.2, 
+                onComplete: () => {
+                    gsap.to(bgVideo, { 
+                        filter: 'blur(4px) brightness(0.6)', 
+                        duration: 0.5, 
+                        delay: 0.1 
+                    });
+                }
+            });
+        });
+
+        // 2. Confetti Burst on Service Request
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // 3. "Did You Know?" Pop-up
+        const didYouKnowFacts = [
+            'fact1',
+            'fact2',
+            'fact3',
+            'fact4'
+        ];
+        let currentFactIndex = 0;
+
+        function showDidYouKnowPopup() {
+            didYouKnowText.textContent = translations[currentLanguage][didYouKnowFacts[currentFactIndex]];
+            didYouKnowPopup.classList.add('show');
+            currentFactIndex = (currentFactIndex + 1) % didYouKnowFacts.length;
+
+            setTimeout(() => {
+                didYouKnowPopup.classList.remove('show');
+            }, 8000); // Show for 8 seconds
+        }
+
+        didYouKnowCloseBtn.addEventListener('click', () => {
+            didYouKnowPopup.classList.remove('show');
+        });
+
+        function startDidYouKnowCarousel() {
+            // Show first fact after a delay, then rotate periodically
+            setTimeout(showDidYouKnowPopup, 10000); // First fact after 10 seconds
+            setInterval(showDidYouKnowPopup, 30000); // Subsequent facts every 30 seconds
+        }
+    });
+    </script>
+</body>
+</html>
