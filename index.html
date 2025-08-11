@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <!--
-    Part 1 of 10
-    This file is the foundation for a modern, modular guest concierge web
-    application. It implements a dark/light theme system, high contrast and
-    large text accessibility modes, persistent state via Local Storage and a
-    responsive layout that gracefully adapts to different screen sizes. Each
-    subsequent part will build upon this foundation to deliver additional
-    features and interactions. All user centric settings are persisted so that
-    guests see their preferences on return visits. To ensure readability and
-    maintainability, logical sections are clearly commented. You should paste
-    the contents of each part sequentially into a single file to build a
-    complete application.
-  -->
+ 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -27,23 +15,9 @@
   />
     <meta name="color-scheme" content="light dark" />
     <style>
-      /*
-        ============================
-        GLOBAL VARIABLES & THEMES
-        ----------------------------
-        We define CSS custom properties (variables) here for the light and dark
-        themes as well as high contrast and large text modes. By centralising
-        colours and dimensions into variables we can easily alter the look
-        without touching every style rule. The defaults reflect a calming
-        blue palette suitable for a professional hospitality environment.
-      */
+     
       :root {
-        /* Brand and accent colours (luxurious palette). Primary is a deep navy,
-           secondary a sophisticated teal and accent a warm gold. Danger,
-           success and warning use rich hues to align with the upscale
-           aesthetic. */
-        /* Refreshed brand colours for a unique, modern look. A deep violet pairs with a bright
-           lilac to create a bold yet sophisticated palette. Coral serves as a warm accent. */
+       
         --brand-primary: #502274; /* deep violet */
         --brand-secondary: #8b5cf6; /* bright lilac */
         --accent: #ff6b6b; /* coral accent */
@@ -54,7 +28,6 @@
         --danger: #d62839; /* wine red */
         --success: #007f5f; /* emerald */
         --warning: #f7b32b; /* amber */
-        /* Background and foreground colours */
         --bg: #f9fafb;
         --bg-alt: #edf2f7;
         --fg: #0a1f33;
@@ -65,26 +38,19 @@
         --border: #d1d5db;
         --border-alt: #cbd5e1;
         --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        /* Shapes */
         --radius: 0.9rem;
         --radius-sm: 0.5rem;
         --radius-lg: 1.4rem;
-        /* Typography */
         --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
           'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
         --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           'Liberation Mono', 'Courier New', monospace;
-        /* Animation & transition */
         --transition-speed: 160ms;
         --transition-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
       }
-      /* Dark mode overrides. When the body has data-theme="dark" the rules
-         below will apply, changing the colours to suit low light conditions.
-      */
+      
       body[data-theme='dark'] {
-        /* Dark theme reimagined for our purple palette. The backgrounds shift
-           to deep violets and indigos while text colours remain high
-           contrast. */
+        
         --bg: #180a2e;
         --bg-alt: #210f44;
         --fg: #ede9fe;
@@ -96,9 +62,7 @@
         --border-alt: #443094;
         --shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
       }
-      /* High contrast mode emphasises outlines and text for visually impaired
-         users. We double the contrast between foreground and background.
-      */
+      
       body[data-contrast='high'] {
         --bg: #ffffff;
         --bg-alt: #f1f5f9;
